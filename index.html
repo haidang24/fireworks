@@ -110,7 +110,8 @@
         explode() {
           this.exploded = true;
           if (!isMuted) playExplosionSound();
-          for (let i = 0; i < 80; i++) {
+          // Tăng số lượng hạt
+          for (let i = 0; i < 120; i++) {
             this.particles.push(new Particle(this.x, this.y, this.color));
           }
         }
@@ -132,11 +133,13 @@
           this.y = y;
           this.color = color;
           this.angle = Math.random() * Math.PI * 2;
-          this.speed = Math.random() * 6 + 2;
+          // this.speed = Math.random() * 6 + 2;
+          this.speed = Math.random() * 8 + 4; // Tăng tốc độ từ (6, 2) lên (8, 4)
           this.gravity = 0.1;
           this.opacity = 1;
           this.fade = Math.random() * 0.02 + 0.01;
-          this.size = Math.random() * 3 + 1;
+          // this.size = Math.random() * 3 + 1;
+          this.size = Math.random() * 5 + 3; // Tăng kích thước tu (3, 1) lên (5, 3)
           this.sparkle = Math.random() > 0.5 ? 1 : 0;
           this.shape = Math.random() > 0.5 ? "circle" : "star";
         }
@@ -153,6 +156,14 @@
           if (this.opacity > 0) {
             ctx.globalAlpha = this.opacity;
             ctx.fillStyle = this.color;
+            //
+            ctx.shadowBlur = 10; // Ánh sáng phát ra
+            ctx.shadowColor = this.color; // Màu phát sáng
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0; // Tắt hiệu ứng sau khi vẽ
+            ctx.globalAlpha = 1;
 
             if (this.shape === "circle") {
               ctx.beginPath();
