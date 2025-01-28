@@ -1,263 +1,340 @@
-<html lang="en">
+<!DOCTYPE html>
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Interactive Fireworks</title>
     <link rel="shortcut icon" href="public/speed.png" type="image/x-icon" />
+    <title>Pháo Hoa Cao Cấp</title>
     <style>
-      body {
+      body,
+      html {
         margin: 0;
-        background-color: #000;
+        padding: 0;
         overflow: hidden;
+        height: 100%;
+        background: #000;
       }
-      #controls {
-        background-color: rgb(255, 255, 255, 0.2);
-        padding: 10px;
-        border-radius: 20px;
+      canvas {
+        display: block;
+      }
+      .controls {
         position: fixed;
-        top: 10px;
-        left: 10px;
-        color: white;
-        font-family: Arial, sans-serif;
+        top: 20px;
+        right: 20px;
+        z-index: 100;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 15px 25px;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
         display: flex;
-        gap: 20px;
-        align-items: center;
+        flex-direction: column;
+        gap: 10px;
       }
-      #speed-slider {
-        -webkit-appearance: none;
-        width: 150px;
-        height: 8px;
-        background: linear-gradient(to right, #4caf50, #f44336);
-        border-radius: 20px;
-        outline: none;
-        transition: background 0.3s;
-        /* boxshadow */
-        box-shadow: 0px 2px 4px 0px rgba(255, 255, 255, 0.3);
-      }
-      #speed-slider::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        width: 15px;
-        height: 15px;
-        background: hsl(0, 0%, 100%);
-        border-radius: 50%;
-        cursor: pointer;
-      }
-      #mute-btn {
-        background: linear-gradient(to right, #ff05ea, #ff1302);
+      .controls button,
+      .controls label {
         color: white;
-        border: none;
-        padding: 5px 10px;
-        border-radius: 20px;
+        font-family: "Arial Rounded MT Bold", Arial;
+        font-size: 16px;
         cursor: pointer;
-        font-size: 14px;
-        font-weight: bold;
+        transition: all 0.3s ease;
       }
-      #mute-btn.muted {
-        background-color: #4caf50;
+      .controls button {
+        background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+        border: none;
+        padding: 8px 15px;
+        border-radius: 25px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .controls button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+      }
+      input[type="range"] {
+        width: 120px;
+        accent-color: #ff6b6b;
+      }
+      .title {
+        position: fixed;
+        bottom: 15%;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: "Brush Script MT", cursive;
+        font-size: 4.5em;
+        color: #fff;
+        text-shadow: 0 0 20px rgba(255, 223, 0, 0.8);
+        animation: glow 2s ease-in-out infinite;
+        pointer-events: none;
+        z-index: 50;
+      }
+
+      @keyframes glow {
+        0%,
+        100% {
+          text-shadow: 0 0 20px rgba(255, 223, 0, 0.8);
+        }
+        50% {
+          text-shadow: 0 0 40px rgba(255, 223, 0, 1),
+            0 0 60px rgba(255, 223, 0, 0.8);
+        }
       }
     </style>
   </head>
   <body>
-    <div id="controls">
-      <label style="color: #ffffff; font-weight: bold"
-        >Speed:
-        <input id="speed-slider" type="range" min="1" max="10" value="2"
+    <div class="title">HAPPY NEW YEAR</div>
+    <div class="controls">
+      <button id="musicToggle">🎵 Bật nhạc nền</button>
+      <label
+        >🚀 Speed:
+        <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1"
       /></label>
-      <button id="mute-btn">Mute</button>
     </div>
     <canvas id="fireworks"></canvas>
+
+    <!-- Audio elements -->
+    <audio id="bgMusic" loop>
+      <source src="/public/bg_newyear2.mp3" type="audio/mpeg" />
+    </audio>
+    <audio id="explodeSound">
+      <source src="/public/fireworks.mp3" type="audio/mpeg" />
+    </audio>
+
     <script>
       const canvas = document.getElementById("fireworks");
       const ctx = canvas.getContext("2d");
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
 
-      let speedMultiplier = 2;
-      let isMuted = false;
+      const fireworks = [];
+      const particles = [];
+      const colors = [
+        "#FF1C1C",
+        "#FFD700",
+        "#05FF05",
+        "#00FFFF",
+        "#FF7F50",
+        "#FF69B4",
+      ];
+      let globalSpeed = 1;
+      let isMusicPlaying = false;
+      const music = document.getElementById("bgMusic");
+      const explodeSound = document.getElementById("explodeSound");
+
+      // Control handlers
+      document.getElementById("speed").addEventListener("input", (e) => {
+        globalSpeed = parseFloat(e.target.value);
+      });
+
+      document.getElementById("musicToggle").addEventListener("click", () => {
+        isMusicPlaying = !isMusicPlaying;
+        music[isMusicPlaying ? "play" : "pause"]();
+        document.getElementById("musicToggle").textContent = isMusicPlaying
+          ? "🎵 Tắt nhạc"
+          : "🎵 Bật nhạc";
+      });
+
+      // Click handler
+      canvas.addEventListener("click", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+        fireworks.push(new Firework(clickX, clickY));
+      });
 
       class Firework {
-        constructor(x, y, targetX, targetY) {
-          this.x = x;
-          this.y = y;
-          this.targetX = targetX;
-          this.targetY = targetY;
-          this.speed = speedMultiplier;
-          this.angle = Math.atan2(targetY - y, targetX - x);
-          this.distance = Math.sqrt((targetX - x) ** 2 + (targetY - y) ** 2);
-          this.traveled = 0;
+        constructor(targetX = null, targetY = null) {
+          if (targetX && targetY) {
+            this.x = targetX;
+            this.y = canvas.height;
+            this.targetY = targetY;
+          } else {
+            this.x = Math.random() * canvas.width;
+            this.y = canvas.height;
+            this.targetY = canvas.height * (0.15 + Math.random() * 0.3);
+          }
+
+          this.sx = (Math.random() - 0.5) * 0.8;
+          this.sy = Math.random() * -12 - 14;
+          this.color = colors[Math.floor(Math.random() * colors.length)];
+          this.radius = 6;
           this.exploded = false;
-          this.particles = [];
-          this.color = `hsl(${Math.random() * 360}, 100%, 60%)`;
+          this.trail = [];
+          this.sparkTimer = 0;
         }
 
         update() {
-          if (!this.exploded) {
-            this.x += Math.cos(this.angle) * this.speed;
-            this.y += Math.sin(this.angle) * this.speed;
-            this.traveled += this.speed;
+          const airResistance = 0.985;
+          const gravity = 0.28 * globalSpeed;
 
-            if (this.traveled >= this.distance) {
-              this.explode();
-            }
+          this.sx *= airResistance;
+          this.sy += gravity;
+          this.x += this.sx * globalSpeed;
+          this.y += this.sy * globalSpeed;
+
+          // Trail effect
+          if (this.sparkTimer % 2 === 0) {
+            this.trail.push({
+              x: this.x,
+              y: this.y,
+              alpha: 1.0,
+              size: Math.random() * 4 + 3,
+              color: `rgba(255, ${Math.random() * 100 + 150}, 50, 0.9)`,
+            });
           }
+          this.sparkTimer++;
 
-          this.particles = this.particles.filter(
-            (particle) => particle.opacity > 0
-          );
-          this.particles.forEach((particle) => particle.update());
+          this.trail.forEach((p, i) => {
+            p.alpha -= 0.03 * globalSpeed;
+            p.size *= 0.92;
+            if (p.alpha <= 0) this.trail.splice(i, 1);
+          });
+
+          if (this.y <= this.targetY && !this.exploded) {
+            this.explode();
+            return true;
+          }
+          return false;
         }
 
         explode() {
-          this.exploded = true;
-          if (!isMuted) playExplosionSound();
-          // Tăng số lượng hạt
-          for (let i = 0; i < 120; i++) {
-            this.particles.push(new Particle(this.x, this.y, this.color));
+          explodeSound.currentTime = 0;
+          explodeSound.play();
+
+          const particleCount = 80 + Math.random() * 50;
+          for (let i = 0; i < particleCount; i++) {
+            particles.push(
+              new Particle(
+                this.x,
+                this.y,
+                this.color,
+                Math.random() * 5 + 3,
+                Math.random() * 0.15 + 0.85,
+                Math.random() * 3 + 2
+              )
+            );
           }
+          this.exploded = true;
         }
 
         draw() {
-          if (!this.exploded) {
+          this.trail.forEach((p) => {
             ctx.beginPath();
-            ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
-            ctx.fillStyle = this.color;
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fillStyle = `${p.color}${p.alpha})`;
             ctx.fill();
-          }
-          this.particles.forEach((particle) => particle.draw());
+          });
+
+          // Flame effect
+          ctx.save();
+          ctx.translate(this.x - this.sx * 5, this.y - this.sy * 5);
+          ctx.rotate(Math.atan2(this.sy, this.sx) - Math.PI / 2);
+
+          const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 15);
+          gradient.addColorStop(0, "rgba(255, 180, 50, 0.9)");
+          gradient.addColorStop(1, "rgba(255, 80, 20, 0)");
+
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 6, 15, 0, 0, Math.PI * 2);
+          ctx.fillStyle = gradient;
+          ctx.fill();
+          ctx.restore();
+
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.fill();
         }
       }
 
       class Particle {
-        constructor(x, y, color) {
+        constructor(x, y, color, speed, friction, size) {
           this.x = x;
           this.y = y;
           this.color = color;
           this.angle = Math.random() * Math.PI * 2;
-          // this.speed = Math.random() * 6 + 2;
-          this.speed = Math.random() * 8 + 4; // Tăng tốc độ từ (6, 2) lên (8, 4)
-          this.gravity = 0.1;
-          this.opacity = 1;
-          this.fade = Math.random() * 0.02 + 0.01;
-          // this.size = Math.random() * 3 + 1;
-          this.size = Math.random() * 5 + 3; // Tăng kích thước tu (3, 1) lên (5, 3)
-          this.sparkle = Math.random() > 0.5 ? 1 : 0;
-          this.shape = Math.random() > 0.5 ? "circle" : "star";
+          this.speed = speed;
+          this.friction = friction;
+          this.gravity = 0.3 * globalSpeed;
+          this.alpha = 1;
+          this.size = size * 2; // tăng kích thước hạt 1.5 ---> 2
+          this.decay = Math.random() * 0.02 + 0.015;
+          this.rotation = Math.random() * Math.PI * 2;
+          this.spin = (Math.random() - 0.5) * 0.1;
         }
 
         update() {
-          this.x += Math.cos(this.angle) * this.speed;
-          this.y += Math.sin(this.angle) * this.speed + this.gravity;
-          this.opacity -= this.fade;
+          this.speed *= this.friction;
+          this.x += Math.cos(this.angle) * this.speed * globalSpeed;
+          this.y +=
+            Math.sin(this.angle) * this.speed * globalSpeed + this.gravity;
+          this.alpha -= this.decay * globalSpeed;
           this.size *= 0.96;
-          if (this.opacity <= 0) this.opacity = 0;
+          this.rotation += this.spin * globalSpeed;
         }
 
         draw() {
-          if (this.opacity > 0) {
-            ctx.globalAlpha = this.opacity;
-            ctx.fillStyle = this.color;
-            //
-            ctx.shadowBlur = 10; // Ánh sáng phát ra
-            ctx.shadowColor = this.color; // Màu phát sáng
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.shadowBlur = 0; // Tắt hiệu ứng sau khi vẽ
-            ctx.globalAlpha = 1;
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.rotate(this.rotation);
+          ctx.globalAlpha = this.alpha;
 
-            if (this.shape === "circle") {
-              ctx.beginPath();
-              ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-              ctx.fill();
-            } else if (this.shape === "star") {
-              ctx.beginPath();
-              for (let i = 0; i < 5; i++) {
-                const angle = (i * (Math.PI * 2)) / 5;
-                const x = this.x + Math.cos(angle) * this.size;
-                const y = this.y + Math.sin(angle) * this.size;
-                ctx.lineTo(x, y);
-              }
-              ctx.closePath();
-              ctx.fill();
-            }
+          const spikes = 5;
+          const outerRadius = this.size;
+          const innerRadius = this.size * 0.4;
 
-            if (this.sparkle && Math.random() > 0.7) {
-              ctx.beginPath();
-              ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
-              ctx.fillStyle = "#fff";
-              ctx.fill();
-            }
-
-            ctx.globalAlpha = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, -outerRadius);
+          for (let i = 0; i < spikes; i++) {
+            ctx.rotate(Math.PI / spikes);
+            ctx.lineTo(0, -innerRadius);
+            ctx.rotate(Math.PI / spikes);
+            ctx.lineTo(0, -outerRadius);
           }
+          ctx.closePath();
+
+          const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, outerRadius);
+          gradient.addColorStop(0, this.color);
+          gradient.addColorStop(1, "rgba(255,255,255,0)");
+
+          ctx.fillStyle = gradient;
+          ctx.fill();
+          ctx.restore();
         }
       }
 
-      const fireworks = [];
-
-      function createFirework(x, y) {
-        const targetX = x;
-        const targetY = y;
-        fireworks.push(
-          new Firework(
-            Math.random() * canvas.width,
-            canvas.height,
-            targetX,
-            targetY
-          )
-        );
-      }
-
-      let lastFireworkTime = 0;
-      const fireworkInterval = 500; // ms
-
-      function animate(timestamp) {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+      function animate() {
+        ctx.fillStyle = `rgba(0, 0, 0, ${0.08 * globalSpeed})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        if (timestamp - lastFireworkTime > fireworkInterval) {
-          createFirework(
-            Math.random() * canvas.width,
-            (Math.random() * canvas.height) / 2
-          );
-          lastFireworkTime = timestamp;
+        if (Math.random() < 0.02 * globalSpeed) {
+          fireworks.push(new Firework());
         }
 
-        for (let i = fireworks.length - 1; i >= 0; i--) {
-          fireworks[i].update();
-          fireworks[i].draw();
-          if (fireworks[i].exploded && fireworks[i].particles.length === 0) {
-            fireworks.splice(i, 1);
+        fireworks.forEach((firework, index) => {
+          if (firework.update()) {
+            fireworks.splice(index, 1);
+          } else {
+            firework.draw();
           }
-        }
+        });
+
+        particles.forEach((particle, index) => {
+          particle.update();
+          particle.draw();
+          if (particle.alpha <= 0) particles.splice(index, 1);
+        });
 
         requestAnimationFrame(animate);
       }
 
-      canvas.addEventListener("click", (e) => {
-        createFirework(e.clientX, e.clientY);
+      window.addEventListener("resize", () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
       });
 
-      document.getElementById("speed-slider").addEventListener("input", (e) => {
-        speedMultiplier = parseFloat(e.target.value);
-        e.target.style.background = `linear-gradient(to right, #4caf50 ${
-          (speedMultiplier - 1) * 11.1
-        }%, #f44336 ${(speedMultiplier - 1) * 11.1}%)`;
-      });
-
-      document.getElementById("mute-btn").addEventListener("click", (e) => {
-        isMuted = !isMuted;
-        e.target.classList.toggle("muted");
-        e.target.textContent = isMuted ? "Unmute" : "Mute";
-      });
-
-      function playExplosionSound() {
-        const audio = new Audio("public/fireworks.mp3");
-        audio.volume = 0.5;
-        audio.play();
-      }
-
-      requestAnimationFrame(animate);
+      animate();
     </script>
   </body>
 </html>
