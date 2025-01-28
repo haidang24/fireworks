@@ -6,6 +6,7 @@
     <link rel="shortcut icon" href="public/speed.png" type="image/x-icon" />
     <title>Pháo Hoa Cao Cấp</title>
     <style>
+      /* Reset CSS */
       body,
       html {
         margin: 0;
@@ -14,48 +15,73 @@
         height: 100%;
         background: #000;
       }
+
       canvas {
         display: block;
       }
-      .controls {
+
+      /* Preloader */
+      .preloader {
         position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 100;
-        background: rgba(0, 0, 0, 0.7);
-        padding: 15px 25px;
-        border-radius: 15px;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        z-index: 1000;
         display: flex;
         flex-direction: column;
-        gap: 10px;
-      }
-      .controls button,
-      .controls label {
-        color: white;
-        font-family: "Arial Rounded MT Bold", Arial;
-        font-size: 16px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-      .controls button {
-        background: linear-gradient(45deg, #ff6b6b, #ff8e53);
-        border: none;
-        padding: 8px 15px;
-        border-radius: 25px;
-        display: flex;
+        justify-content: center;
         align-items: center;
-        gap: 8px;
+        transition: opacity 0.5s;
       }
-      .controls button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+
+      .loading-text {
+        color: #fff;
+        font-size: 2.5em;
+        font-family: "Brush Script MT", cursive;
+        margin-bottom: 30px;
+        text-align: center;
+        text-shadow: 0 0 10px #ffd700;
       }
-      input[type="range"] {
-        width: 120px;
-        accent-color: #ff6b6b;
+
+      .loading-bar {
+        width: 300px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+        overflow: hidden;
       }
+
+      .loading-progress {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, #ff6b6b, #ffd700);
+        transition: width 0.3s ease;
+      }
+
+      /* New Year Greeting */
+      .newyear-greeting {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #ffd700;
+        font-family: "Brush Script MT", cursive;
+        font-size: 4em;
+        text-align: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.5s;
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+      }
+
+      .newyear-greeting.show {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      /* Fireworks Title */
       .title {
         position: fixed;
         bottom: 15%;
@@ -80,35 +106,156 @@
             0 0 60px rgba(255, 223, 0, 0.8);
         }
       }
+
+      /* Controls */
+      .controls {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 100;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 15px 25px;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .controls button,
+      .controls label {
+        color: white;
+        font-family: "Arial Rounded MT Bold", Arial;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .controls button {
+        background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+        border: none;
+        padding: 8px 15px;
+        border-radius: 25px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .controls button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+      }
+
+      input[type="range"] {
+        width: 120px;
+        accent-color: #ff6b6b;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .title {
+          font-size: 3em;
+          bottom: 20%;
+        }
+
+        .controls {
+          top: 10px;
+          right: 10px;
+          padding: 10px;
+          font-size: 14px;
+        }
+
+        input[type="range"] {
+          width: 100px;
+        }
+
+        .newyear-greeting {
+          font-size: 2.5em;
+        }
+
+        .loading-text {
+          font-size: 2em;
+        }
+      }
     </style>
   </head>
   <body>
+    <!-- Preloader -->
+    <div class="preloader">
+      <div class="loading-text">Đang chuẩn bị pháo hoa...</div>
+      <div class="loading-bar">
+        <div class="loading-progress"></div>
+      </div>
+    </div>
+
+    <!-- New Year Greeting -->
+    <div class="newyear-greeting">
+      <div>Chúc Mừng Năm Mới 🐍</div>
+      <div style="font-size: 0.6em">2025 - An Khang Thịnh Vượng</div>
+    </div>
+
+    <!-- Fireworks Content -->
     <div class="title">HAPPY NEW YEAR</div>
     <div class="controls">
       <button id="musicToggle">🎵 Bật nhạc nền</button>
-      <label
-        >🚀 Speed:
-        <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1"
-      /></label>
+      <label>
+        🚀 Speed:
+        <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1" />
+        <span id="speedValue">1</span>
+      </label>
     </div>
     <canvas id="fireworks"></canvas>
 
-    <!-- Audio elements -->
-    <audio id="bgMusic" loop>
+    <!-- Audio -->
+    <audio id="bgMusic" loop preload="auto">
       <source src="/public/bg_newyear2.mp3" type="audio/mpeg" />
     </audio>
-    <audio id="explodeSound">
+    <audio id="explodeSound" preload="auto">
       <source src="/public/fireworks.mp3" type="audio/mpeg" />
     </audio>
 
     <script>
+      // Preloader Logic
+      const preloader = document.querySelector(".preloader");
+      const progressBar = document.querySelector(".loading-progress");
+      const greeting = document.querySelector(".newyear-greeting");
+
+      // Hiệu ứng loading 5 giây
+      let width = 0;
+      const interval = setInterval(() => {
+        width += 1;
+        progressBar.style.width = width + "%";
+
+        if (width >= 100) {
+          clearInterval(interval);
+          preloader.style.opacity = "0";
+          setTimeout(() => {
+            preloader.style.display = "none";
+            // Hiển thị lời chúc
+            greeting.classList.add("show");
+            // Ẩn lời chúc sau 3 giây
+            setTimeout(() => {
+              greeting.classList.remove("show");
+              // Bắt đầu hiệu ứng pháo hoa
+              initFireworks();
+            }, 3000);
+          }, 500);
+        }
+      }, 50);
+
+      // Khởi tạo pháo hoa sau khi loading
+      function initFireworks() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        animate();
+      }
+
+      // Fireworks Logic
       const canvas = document.getElementById("fireworks");
       const ctx = canvas.getContext("2d");
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-
-      const fireworks = [];
-      const particles = [];
+      let fireworks = [];
+      let particles = [];
       const colors = [
         "#FF1C1C",
         "#FFD700",
@@ -122,11 +269,13 @@
       const music = document.getElementById("bgMusic");
       const explodeSound = document.getElementById("explodeSound");
 
-      // Control handlers
+      // Speed control
       document.getElementById("speed").addEventListener("input", (e) => {
         globalSpeed = parseFloat(e.target.value);
+        document.getElementById("speedValue").textContent = e.target.value;
       });
 
+      // Music control
       document.getElementById("musicToggle").addEventListener("click", () => {
         isMusicPlaying = !isMusicPlaying;
         music[isMusicPlaying ? "play" : "pause"]();
@@ -138,23 +287,17 @@
       // Click handler
       canvas.addEventListener("click", (e) => {
         const rect = canvas.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const clickY = e.clientY - rect.top;
-        fireworks.push(new Firework(clickX, clickY));
+        fireworks.push(
+          new Firework(e.clientX - rect.left, e.clientY - rect.top)
+        );
       });
 
       class Firework {
         constructor(targetX = null, targetY = null) {
-          if (targetX && targetY) {
-            this.x = targetX;
-            this.y = canvas.height;
-            this.targetY = targetY;
-          } else {
-            this.x = Math.random() * canvas.width;
-            this.y = canvas.height;
-            this.targetY = canvas.height * (0.15 + Math.random() * 0.3);
-          }
-
+          this.x = targetX || Math.random() * canvas.width;
+          this.y = canvas.height;
+          this.targetY =
+            targetY || canvas.height * (0.15 + Math.random() * 0.3);
           this.sx = (Math.random() - 0.5) * 0.8;
           this.sy = Math.random() * -12 - 14;
           this.color = colors[Math.floor(Math.random() * colors.length)];
@@ -173,8 +316,8 @@
           this.x += this.sx * globalSpeed;
           this.y += this.sy * globalSpeed;
 
-          // Trail effect
-          if (this.sparkTimer % 2 === 0) {
+          // Trail management
+          if (this.sparkTimer % 2 === 0 && this.trail.length < 20) {
             this.trail.push({
               x: this.x,
               y: this.y,
@@ -183,12 +326,12 @@
               color: `rgba(255, ${Math.random() * 100 + 150}, 50, 0.9)`,
             });
           }
+          if (this.trail.length > 15) this.trail.shift();
           this.sparkTimer++;
 
-          this.trail.forEach((p, i) => {
+          this.trail.forEach((p) => {
             p.alpha -= 0.03 * globalSpeed;
             p.size *= 0.92;
-            if (p.alpha <= 0) this.trail.splice(i, 1);
           });
 
           if (this.y <= this.targetY && !this.exploded) {
@@ -222,7 +365,7 @@
           this.trail.forEach((p) => {
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            ctx.fillStyle = `${p.color}${p.alpha})`;
+            ctx.fillStyle = `${p.color.slice(0, -1)}, ${p.alpha})`;
             ctx.fill();
           });
 
@@ -258,8 +401,8 @@
           this.friction = friction;
           this.gravity = 0.3 * globalSpeed;
           this.alpha = 1;
-          this.size = size * 2; // tăng kích thước hạt 1.5 ---> 2
-          this.decay = Math.random() * 0.02 + 0.015;
+          this.size = size * 2; //1.5-->2
+          this.decay = Math.random() * 0.015 + 0.01;
           this.rotation = Math.random() * Math.PI * 2;
           this.spin = (Math.random() - 0.5) * 0.1;
         }
@@ -272,6 +415,7 @@
           this.alpha -= this.decay * globalSpeed;
           this.size *= 0.96;
           this.rotation += this.spin * globalSpeed;
+          return this.alpha > 0;
         }
 
         draw() {
@@ -312,18 +456,20 @@
           fireworks.push(new Firework());
         }
 
-        fireworks.forEach((firework, index) => {
-          if (firework.update()) {
-            fireworks.splice(index, 1);
+        // Update fireworks
+        for (let i = fireworks.length - 1; i >= 0; i--) {
+          if (fireworks[i].update()) {
+            fireworks.splice(i, 1);
           } else {
-            firework.draw();
+            fireworks[i].draw();
           }
-        });
+        }
 
-        particles.forEach((particle, index) => {
+        // Update particles
+        particles = particles.filter((particle) => {
           particle.update();
           particle.draw();
-          if (particle.alpha <= 0) particles.splice(index, 1);
+          return particle.alpha > 0;
         });
 
         requestAnimationFrame(animate);
@@ -333,8 +479,6 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
       });
-
-      animate();
     </script>
   </body>
 </html>
