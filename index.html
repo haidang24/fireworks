@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="shortcut icon" href="public/speed.png" type="image/x-icon" />
-    <title>Pháo Hoa Cao Cấp</title>
+    <title>Fire Works</title>
     <style>
       /* Reset CSS */
       body,
@@ -183,7 +183,7 @@
   <body>
     <!-- Preloader -->
     <div class="preloader">
-      <div class="loading-text">Đang chuẩn bị pháo hoa...</div>
+      <div class="loading-text">Loading...</div>
       <div class="loading-bar">
         <div class="loading-progress"></div>
       </div>
@@ -198,7 +198,7 @@
     <!-- Fireworks Content -->
     <div class="title">HAPPY NEW YEAR</div>
     <div class="controls">
-      <button id="musicToggle">🎵 Bật nhạc nền</button>
+      <button id="musicToggle">🎵 Turn On Music</button>
       <label>
         🚀 Speed:
         <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1" />
@@ -209,7 +209,7 @@
 
     <!-- Audio -->
     <audio id="bgMusic" loop preload="auto">
-      <source src="/public/bg_newyear2.mp3" type="audio/mpeg" />
+      <source src="/public/music.mp3" type="audio/mpeg" />
     </audio>
     <audio id="explodeSound" preload="auto">
       <source src="/public/fireworks.mp3" type="audio/mpeg" />
@@ -280,8 +280,8 @@
         isMusicPlaying = !isMusicPlaying;
         music[isMusicPlaying ? "play" : "pause"]();
         document.getElementById("musicToggle").textContent = isMusicPlaying
-          ? "🎵 Tắt nhạc"
-          : "🎵 Bật nhạc";
+          ? "🎵 Turn Off"
+          : "🎵 Turn On";
       });
 
       // Click handler
